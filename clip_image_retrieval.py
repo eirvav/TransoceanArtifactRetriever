@@ -3,6 +3,7 @@ import torch
 from PIL import Image
 import numpy as np
 from transformers import CLIPProcessor, CLIPModel
+import pickle
 
 # Load CLIP model and processor
 model = CLIPModel.from_pretrained("openai/clip-vit-base-patch32")
@@ -35,50 +36,46 @@ def encode_text(text):
         text_features = model.get_text_features(**inputs)
     return text_features
 
-# Function to find similar images
-def find_similar_images(query_text, image_paths, top_k=10):
-    # Encode images
-    encoded_images = encode_images(image_paths)
-    if encoded_images is None:
-        print("No valid images found.")
-        return []
+# Function to pre-embed images and save embeddings
+def pre_embed_images(image_folder, embeddings_file='image_embeddings.pkl'):
+    image_paths = [os.path.join(image_folder, f) for f in os.listdir(image_folder) 
+                   if f.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.bmp'))]
     
-    # Encode text query
+    print(f"Pre-embedding {len(image_paths)} images...")
+    encoded_images = encode_images(image_paths)
+    
+    embeddings_data = {
+        'embeddings': encoded_images,
+        'image_paths': image_paths
+    }
+    
+    with open(embeddings_file, 'wb') as f:
+        pickle.dump(embeddings_data, f)
+    
+    print(f"Embeddings saved to {embeddings_file}")
+
+# Function to load pre-computed embeddings
+def load_embeddings(embeddings_file='image_embeddings.pkl'):
+    with open(embeddings_file, 'rb') as f:
+        embeddings_data = pickle.load(f)
+    return embeddings_data['embeddings'], embeddings_data['image_paths']
+
+# Function to find similar images using pre-computed embeddings
+def find_similar_images(query_text, encoded_images, image_paths, top_k=10):
     encoded_text = encode_text(query_text)
     
-    # Calculate similarity scores
     similarity_scores = torch.nn.functional.cosine_similarity(encoded_text, encoded_images)
     
-    # Get top-k similar images
     top_k_indices = similarity_scores.argsort(descending=True)[:top_k]
     top_k_scores = similarity_scores[top_k_indices]
     
     return [(image_paths[i], score.item()) for i, score in zip(top_k_indices, top_k_scores)]
 
-# Example usage
-if __name__ == "__main__":
-    # Replace this with the path to your image folder
-    image_folder = "/Users/eirvav/clip_image_retrieval/fridgeObjects/can"
+# Modified get_similar_images function to use pre-computed embeddings
+def get_similar_images(query_text, image_folder, top_k=20, embeddings_file='image_embeddings.pkl'):
+    if not os.path.exists(embeddings_file):
+        pre_embed_images(image_folder, embeddings_file)
     
-    # Get all image files from the folder
-    image_paths = [os.path.join(image_folder, f) for f in os.listdir(image_folder) 
-                   if f.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.bmp'))]
-    
-    if not image_paths:
-        print(f"No image files found in {image_folder}")
-    else:
-        print(f"Found {len(image_paths)} images in {image_folder}")
-        
-        query_text = "a blue soda can"
-        similar_images = find_similar_images(query_text, image_paths)
-        
-        print(f"\nTop 5 images similar to '{query_text}':")
-        for path, score in similar_images:
-            print(f"Image: {path}, Similarity Score: {score:.4f}")
-
-def get_similar_images(query_text, image_folder, top_k=15):
-    image_paths = [os.path.join(image_folder, f) for f in os.listdir(image_folder) 
-                   if f.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.bmp'))]
-    
-    similar_images = find_similar_images(query_text, image_paths, top_k)
+    encoded_images, image_paths = load_embeddings(embeddings_file)
+    similar_images = find_similar_images(query_text, encoded_images, image_paths, top_k)
     return [{'path': os.path.basename(path), 'score': score} for path, score in similar_images]

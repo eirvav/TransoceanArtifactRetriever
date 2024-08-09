@@ -59,7 +59,7 @@ button:hover {
 
 .img-container img {
     width: 100%;
-    height: 100%;
+    height: 200px;
     object-fit: cover;
     border-radius: 4px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
@@ -114,4 +114,56 @@ button:hover {
 @keyframes spin {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
+}
+
+.enlarge-icon {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background-color: rgba(255, 255, 255, 0.7);
+    border-radius: 50%;
+    padding: 5px;
+    cursor: pointer;
+    display: none;  /* Hide by default */
+    transition: opacity 0.3s ease;  /* Smooth transition */
+}
+
+.img-container:hover .enlarge-icon {
+    display: block;  /* Show on hover */
+}
+
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+}
+
+.modal-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+}
+
+#enlargedImage {
+    max-width: 90%;
+    max-height: 80%;
+    object-fit: contain;
+}
+
+.modal-buttons {
+    margin-top: 20px;
+}
+
+.modal-buttons button {
+    margin: 0 10px;
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
 }

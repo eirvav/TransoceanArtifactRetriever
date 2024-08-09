@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Image Retrieval System</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
 <body>
     <div class="container">
@@ -17,6 +18,17 @@
         <div id="results" class="image-grid"></div>
     </div>
     <button id="download-btn" class="hidden" onclick="downloadSelected()">Download Selected</button>
+
+    <!-- Modal -->
+    <div id="imageModal" class="modal">
+        <div class="modal-content">
+            <img id="enlargedImage" src="" alt="Enlarged image">
+            <div class="modal-buttons">
+                <button onclick="closeModal()">Close</button>
+                <button onclick="downloadEnlarged()">Download</button>
+            </div>
+        </div>
+    </div>
 
     <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>

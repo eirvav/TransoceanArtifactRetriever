@@ -1,4 +1,5 @@
 let selectedImages = new Set();
+let currentEnlargedImage = '';
 
 function search() {
     const query = document.getElementById('search-input').value;
@@ -32,7 +33,15 @@ function search() {
             imgElement.title = `Similarity: ${item.score.toFixed(2)}`;
             imgElement.addEventListener('click', () => toggleImageSelection(item.path, imgContainer));
             
+            const enlargeIcon = document.createElement('i');
+            enlargeIcon.className = 'fas fa-search-plus enlarge-icon';
+            enlargeIcon.addEventListener('click', (e) => {
+                e.stopPropagation();
+                enlargeImage(item.path);
+            });
+            
             imgContainer.appendChild(imgElement);
+            imgContainer.appendChild(enlargeIcon);
             resultsContainer.appendChild(imgContainer);
         });
         updateDownloadButton();
@@ -82,6 +91,30 @@ function downloadSelected() {
     }
 }
 
+function enlargeImage(imagePath) {
+    const modal = document.getElementById('imageModal');
+    const enlargedImg = document.getElementById('enlargedImage');
+    enlargedImg.src = `/static/images/${imagePath}`;
+    currentEnlargedImage = imagePath;
+    modal.style.display = 'block';
+}
+
+function closeModal() {
+    const modal = document.getElementById('imageModal');
+    modal.style.display = 'none';
+}
+
+function downloadEnlarged() {
+    if (currentEnlargedImage) {
+        const link = document.createElement('a');
+        link.href = `/static/images/${currentEnlargedImage}`;
+        link.download = currentEnlargedImage;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     const searchInput = document.getElementById('search-input');
     searchInput.addEventListener('keypress', (e) => {
@@ -89,4 +122,34 @@ document.addEventListener('DOMContentLoaded', () => {
             search();
         }
     });
+
+    // Close modal when clicking outside the image
+    window.onclick = function(event) {
+        const modal = document.getElementById('imageModal');
+        if (event.target == modal) {
+            closeModal();
+        }
+    }
 });
+
+function lazyLoadImages() {
+    const images = document.querySelectorAll('.img-container img');
+    const observer = new IntersectionObserver((entries, observer) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                const img = entry.target;
+                img.src = img.dataset.src;
+                observer.unobserve(img);
+            }
+        });
+    });
+
+    images.forEach(img => {
+        img.dataset.src = img.src;
+        img.src = '';  // Clear the src to prevent immediate loading
+        observer.observe(img);
+    });
+}
+
+// Call this function after populating your results
+lazyLoadImages();

@@ -45,6 +45,7 @@ def encode_text(text):
 
 # Function to pre-embed images and save embeddings
 def pre_embed_images(image_folder, embeddings_file='image_embeddings.pkl', batch_size=32):
+    print(f"Starting pre-embedding process for {image_folder}")
     image_paths = [os.path.join(image_folder, f) for f in os.listdir(image_folder) 
                    if f.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.bmp'))]
     
@@ -78,9 +79,10 @@ def find_similar_images(query_text, encoded_images, image_paths, top_k=10):
     
     return [(image_paths[i], score.item()) for i, score in zip(top_k_indices, top_k_scores)]
 
-# Modified get_similar_images function to use pre-computed embeddings
+
 def get_similar_images(query_text, image_folder, top_k=20, embeddings_file='image_embeddings.pkl'):
     if not os.path.exists(embeddings_file):
+        print(f"Embeddings file not found. Creating new embeddings...")
         pre_embed_images(image_folder, embeddings_file)
     
     encoded_images, image_paths = load_embeddings(embeddings_file)

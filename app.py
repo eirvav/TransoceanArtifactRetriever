@@ -3,11 +3,24 @@ import io
 import json
 import zipfile
 from flask import Flask, render_template, request, jsonify, send_file
-from clip_image_retrieval import get_similar_images
+from clip_image_retrieval import get_similar_images, pre_embed_images
 
 app = Flask(__name__)
 
 IMAGE_FOLDER = os.path.join(app.static_folder, 'images')
+EMBEDDINGS_FILE = 'image_embeddings.pkl'
+
+def embed_images_if_needed():
+    if not os.path.exists(EMBEDDINGS_FILE):
+        embed_choice = input("Embeddings file not found. Do you want to embed the images? (y/n): ").lower()
+        if embed_choice == 'y':
+            print("Embedding images...")
+            pre_embed_images(IMAGE_FOLDER, EMBEDDINGS_FILE)
+            print("Embedding complete.")
+        else:
+            print("Skipping image embedding. Note that embedding will be done on the first search request.")
+    else:
+        print("Embeddings file found. Using existing embeddings.")
 
 @app.route('/')
 def index():
@@ -16,7 +29,7 @@ def index():
 @app.route('/search', methods=['POST'])
 def search():
     query = request.form['query']
-    results = get_similar_images(query, IMAGE_FOLDER)
+    results = get_similar_images(query, IMAGE_FOLDER, embeddings_file=EMBEDDINGS_FILE)
     return jsonify(results)
 
 @app.route('/download', methods=['POST'])
@@ -43,4 +56,5 @@ def download_images():
     )
 
 if __name__ == '__main__':
+    embed_images_if_needed()
     app.run(debug=True)

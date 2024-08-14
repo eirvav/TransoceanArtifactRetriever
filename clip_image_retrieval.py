@@ -4,6 +4,7 @@ from PIL import Image
 import numpy as np
 from transformers import CLIPProcessor, CLIPModel
 import pickle
+import gc
 
 # Load CLIP model and processor
 model = CLIPModel.from_pretrained("openai/clip-vit-base-patch32")
@@ -18,15 +19,21 @@ def preprocess_image(image_path):
         print(f"Error processing image {image_path}: {e}")
         return None
 
-# Function to encode images
-def encode_images(image_paths):
+# Function to encode images with batch processing
+def encode_images(image_paths, batch_size=32):
     encoded_images = []
-    for image_path in image_paths:
-        preprocessed_image = preprocess_image(image_path)
-        if preprocessed_image is not None:
+    for i in range(0, len(image_paths), batch_size):
+        batch_paths = image_paths[i:i+batch_size]
+        batch_images = [preprocess_image(path) for path in batch_paths if preprocess_image(path) is not None]
+        if batch_images:
+            batch_tensor = torch.stack(batch_images)
             with torch.no_grad():
-                image_features = model.get_image_features(preprocessed_image.unsqueeze(0))
-            encoded_images.append(image_features)
+                batch_features = model.get_image_features(batch_tensor)
+            encoded_images.append(batch_features)
+        
+        # Force garbage collection after each batch
+        gc.collect()
+    
     return torch.cat(encoded_images) if encoded_images else None
 
 # Function to encode text
@@ -37,12 +44,12 @@ def encode_text(text):
     return text_features
 
 # Function to pre-embed images and save embeddings
-def pre_embed_images(image_folder, embeddings_file='image_embeddings.pkl'):
+def pre_embed_images(image_folder, embeddings_file='image_embeddings.pkl', batch_size=32):
     image_paths = [os.path.join(image_folder, f) for f in os.listdir(image_folder) 
                    if f.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.bmp'))]
     
     print(f"Pre-embedding {len(image_paths)} images...")
-    encoded_images = encode_images(image_paths)
+    encoded_images = encode_images(image_paths, batch_size)
     
     embeddings_data = {
         'embeddings': encoded_images,
@@ -79,3 +86,18 @@ def get_similar_images(query_text, image_folder, top_k=20, embeddings_file='imag
     encoded_images, image_paths = load_embeddings(embeddings_file)
     similar_images = find_similar_images(query_text, encoded_images, image_paths, top_k)
     return [{'path': os.path.basename(path), 'score': score} for path, score in similar_images]
+
+# Optional: Generator-based approach for very large datasets
+def encode_images_generator(image_paths, batch_size=32):
+    for i in range(0, len(image_paths), batch_size):
+        batch_paths = image_paths[i:i+batch_size]
+        batch_images = [preprocess_image(path) for path in batch_paths if preprocess_image(path) is not None]
+        if batch_images:
+            batch_tensor = torch.stack(batch_images)
+            with torch.no_grad():
+                batch_features = model.get_image_features(batch_tensor)
+            yield batch_features
+        gc.collect()
+
+# Usage example for generator-based approach:
+# encoded_images = torch.cat(list(encode_images_generator(image_paths)))

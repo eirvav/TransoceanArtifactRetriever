@@ -28,7 +28,7 @@ function search() {
             imgContainer.className = 'img-container';
             
             const imgElement = document.createElement('img');
-            imgElement.src = `/static/images/${item.path}`;
+            imgElement.dataset.src = `/static/images/${item.path}`; // Use data-src for lazy loading
             imgElement.alt = `Similarity: ${item.score.toFixed(2)}`;
             imgElement.title = `Similarity: ${item.score.toFixed(2)}`;
             imgElement.addEventListener('click', () => toggleImageSelection(item.path, imgContainer));
@@ -45,6 +45,7 @@ function search() {
             resultsContainer.appendChild(imgContainer);
         });
         updateDownloadButton();
+        lazyLoadImages(); // Call this after adding images to the DOM
     })
     .catch(error => {
         console.error('Error:', error);
@@ -145,8 +146,6 @@ function lazyLoadImages() {
     });
 
     images.forEach(img => {
-        img.dataset.src = img.src;
-        img.src = '';  // Clear the src to prevent immediate loading
         observer.observe(img);
     });
 }

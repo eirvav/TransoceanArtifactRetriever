@@ -9,7 +9,7 @@
 </head>
 <body>
     <div class="container">
-        <h1>Image Retrieval System</h1>
+        <h1>Transocean Artifact Retriever</h1>
         <div class="search-container">
             <input type="text" id="search-input" placeholder="Enter your search query...">
             <button onclick="search()">Search</button>
@@ -24,8 +24,8 @@
         <div class="modal-content">
             <img id="enlargedImage" src="" alt="Enlarged image">
             <div class="modal-buttons">
-                <button onclick="closeModal()">Close</button>
-                <button onclick="downloadEnlarged()">Download</button>
+                <button onclick="closeModal()" id="close-btn">Close</button>
+                <button onclick="downloadEnlarged()" id="download-btn-single">Download</button>
             </div>
         </div>
     </div>

@@ -3,7 +3,7 @@ from azure.identity import DefaultAzureCredential
 from azure.storage.blob import BlobServiceClient
 
 # Define your storage account URL
-account_url = "https://openaitestknowledgebase.blob.core.windows.net"
+account_url = "https://<YOUR STORAGE ACCOUNT>.blob.core.windows.net"
 
 # Use DefaultAzureCredential for authentication
 default_credential = DefaultAzureCredential()
@@ -12,10 +12,10 @@ default_credential = DefaultAzureCredential()
 blob_service_client = BlobServiceClient(account_url, credential=default_credential)
 
 # Specify the container name
-container_name = "corpcomm"
+container_name = "<CONTAINER NAME>"
 
 # Define the prefix to filter blobs by the directory structure
-prefix = "2022 GOLF TOURNAMENT/Taylor's Photos/"
+prefix = "<YOUR PREFIX>"
 
 # Create a local directory to store downloaded files
 local_download_path = "././static/images"

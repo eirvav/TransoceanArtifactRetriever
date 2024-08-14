@@ -57,4 +57,4 @@ def download_images():
 
 if __name__ == '__main__':
     embed_images_if_needed()
-    app.run(debug=True)
+    app.run(debug=True, port=5001)  # or any other port number
